@@ -621,64 +621,88 @@ function renderCharts() {
   }
 }
 
-function renderFunnelAndRevenue() {
-  const kpi = EMBEDDED_KPI;
-  return `
-    <!-- Funnel -->
-    <div class="chart-card" style="margin-bottom:28px">
-      <div class="chart-title">Acquisition Funnel</div>
-      <div class="chart-subtitle">Cumulative since Aug 10, 2025 | Mixpanel & Stripe</div>
-      <div style="padding-top:16px">
-        <div class="funnel-bar-container">
-          <div class="funnel-label">Website Visitors</div>
-          <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:100%;background:var(--accent)">${fmt(kpi['Website Visitors'])}</div></div>
-          <div class="funnel-rate">—</div>
-        </div>
-        <div class="funnel-bar-container">
-          <div class="funnel-label">Download Clicks</div>
-          <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:${(13428/75318*100).toFixed(1)}%;background:#818cf8">${fmt(kpi['Download Clicks'])}</div></div>
-          <div class="funnel-rate">${kpi['Visitor-to-Download Rate']}</div>
-        </div>
-        <div class="funnel-bar-container">
-          <div class="funnel-label">Signups</div>
-          <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:${(10000/75318*100).toFixed(1)}%;background:var(--accent2)">${fmt(kpi['Signups'])}</div></div>
-          <div class="funnel-rate">${kpi['Download-to-Signup Rate']}</div>
-        </div>
-        <div class="funnel-bar-container">
-          <div class="funnel-label">Paid (active)</div>
-          <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:${(1113/75318*100*4).toFixed(1)}%;background:var(--green)">${fmt(kpi['Paid (active, price > 0)'])}</div></div>
-          <div class="funnel-rate">${kpi['Signup-to-Paid Rate']}</div>
+function renderFunnel() {
+  // Show funnel based on current view context
+  if (currentView === 'daily') {
+    const today = getToday();
+    const todayData = findDailyData(today);
+    const lastWeekData = findSameDayLastWeek(today);
+    const dayName = getDayOfWeek(today);
+
+    const dl = todayData ? todayData.downloads : 0;
+    const su = todayData ? todayData.signups : 0;
+    const dlRate = dl > 0 ? ((su / dl) * 100).toFixed(1) + '%' : '—';
+    const prevDl = lastWeekData ? lastWeekData.downloads : 0;
+    const prevSu = lastWeekData ? lastWeekData.signups : 0;
+    const prevDlRate = prevDl > 0 ? ((prevSu / prevDl) * 100).toFixed(1) + '%' : '—';
+
+    const maxVal = Math.max(dl, su, 1);
+
+    return `
+      <div class="chart-card" style="margin-bottom:28px">
+        <div class="chart-title">Daily Acquisition Funnel</div>
+        <div class="chart-subtitle">Today (${dayName}) vs Last ${dayName} | Mixpanel</div>
+        <div style="padding-top:16px">
+          <div class="funnel-bar-container">
+            <div class="funnel-label">Downloads</div>
+            <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:${dl > 0 ? 100 : 0}%;background:var(--accent)">${fmt(dl)}</div></div>
+            <div class="funnel-rate">Last ${dayName}: ${fmt(prevDl)}</div>
+          </div>
+          <div class="funnel-bar-container">
+            <div class="funnel-label">Signups</div>
+            <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:${dl > 0 ? (su/dl*100).toFixed(1) : 0}%;background:var(--accent2)">${fmt(su)}</div></div>
+            <div class="funnel-rate">${dlRate} conv. (was ${prevDlRate})</div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Revenue Table -->
-    <div class="charts-grid">
-      <div class="chart-card">
-        <div class="chart-title">Revenue Breakdown</div>
-        <div class="chart-subtitle">MRR by plan (Stripe data)</div>
-        <table class="data-table">
-          <thead><tr><th>Plan</th><th style="text-align:right">MRR</th><th style="text-align:right">Subs</th><th style="text-align:right">Avg/Sub</th></tr></thead>
-          <tbody>
-            <tr><td>Pro Unlimited <span class="badge core">Core</span></td><td style="text-align:right">${fmtMoneyFull(kpi['Pro Unlimited MRR'])}</td><td style="text-align:right">501</td><td style="text-align:right">$18.22</td></tr>
-            <tr><td>Pro Team <span class="badge core">Core</span></td><td style="text-align:right">${fmtMoneyFull(kpi['Pro Team MRR'])}</td><td style="text-align:right">63</td><td style="text-align:right">$121.78</td></tr>
-            <tr><td>Pro Lite <span class="badge core">Core</span></td><td style="text-align:right">${fmtMoneyFull(kpi['Pro Lite MRR'])}</td><td style="text-align:right">474</td><td style="text-align:right">$7.49</td></tr>
-            <tr><td>Other <span class="badge legacy">Legacy</span></td><td style="text-align:right">$613.62</td><td style="text-align:right">75</td><td style="text-align:right">$8.18</td></tr>
-            <tr style="font-weight:700"><td>Total</td><td style="text-align:right">${fmtMoneyFull(kpi['Total MRR'])}</td><td style="text-align:right">${fmt(kpi['Paid (active, price > 0)'])}</td><td style="text-align:right">${fmtMoneyFull(kpi['Total MRR']/kpi['Paid (active, price > 0)'])}</td></tr>
-          </tbody>
-        </table>
+      <div style="text-align:center;padding:24px;color:var(--muted);font-size:11px;">
+        Data source: Mixpanel
+      </div>`;
+
+  } else {
+    // Weekly view — show current week cumulative funnel
+    const currentWeek = WEEKLY_DATA.find(w => !w.complete);
+    const lastWeek = WEEKLY_DATA.find(w => w.complete && w.week_num === (currentWeek ? currentWeek.week_num - 1 : null));
+
+    if (!currentWeek || !lastWeek) return '';
+
+    const dl = currentWeek.downloads_cumulative || 0;
+    const su = currentWeek.signups_cumulative || 0;
+    const dlRate = dl > 0 ? ((su / dl) * 100).toFixed(1) + '%' : '—';
+
+    const prevDl = lastWeek.downloads || 0;
+    const prevSu = lastWeek.signups || 0;
+    const prevDlRate = prevDl > 0 ? ((prevSu / prevDl) * 100).toFixed(1) + '%' : '—';
+
+    return `
+      <div class="chart-card" style="margin-bottom:28px">
+        <div class="chart-title">Weekly Acquisition Funnel</div>
+        <div class="chart-subtitle">Week ${currentWeek.week_num} so far (${currentWeek.days_reported} days) vs Week ${lastWeek.week_num} final | Mixpanel</div>
+        <div style="padding-top:16px">
+          <div class="funnel-bar-container">
+            <div class="funnel-label">Downloads</div>
+            <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:100%;background:var(--accent)">${fmt(dl)}</div></div>
+            <div class="funnel-rate">Last wk: ${fmt(prevDl)}</div>
+          </div>
+          <div class="funnel-bar-container">
+            <div class="funnel-label">Signups</div>
+            <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:${dl > 0 ? (su/dl*100).toFixed(1) : 0}%;background:var(--accent2)">${fmt(su)}</div></div>
+            <div class="funnel-rate">${dlRate} conv. (last wk: ${prevDlRate})</div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <div style="text-align:center;padding:24px;color:var(--muted);font-size:11px;">
-      Data source: <a href="https://docs.google.com/spreadsheets/d/15X5mhcv7pB0dgztn_hDbwW_7HdSM9yfT-eJ6JiPVPHk" target="_blank" style="color:var(--accent)">Quill Daily Dashboard Data</a> (Google Sheets) &nbsp;|&nbsp; Mixpanel &nbsp;|&nbsp; Stripe
-    </div>`;
+      <div style="text-align:center;padding:24px;color:var(--muted);font-size:11px;">
+        Data source: Mixpanel
+      </div>`;
+  }
 }
 
 function render() {
   destroyCharts();
   const viewHtml = currentView === 'daily' ? renderDaily() : renderWeekly();
-  document.getElementById('dashboard').innerHTML = viewHtml + renderFunnelAndRevenue();
+  document.getElementById('dashboard').innerHTML = viewHtml + renderFunnel();
   document.getElementById('lastUpdated').textContent = 'Data as of: Mar 16, 2026';
   renderCharts();
 }
