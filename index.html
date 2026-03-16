@@ -232,16 +232,16 @@ const EMBEDDED_QUILLIAM = [
 // signups = new signups that day
 const DAILY_DATA = [
   // Week 11 (Sun Mar 8 – Sat Mar 14)
-  {date:"2026-03-08", day:"Sun", week:11, meeting_dau:null, quilliam:23,  downloads:26, signups:23},
-  {date:"2026-03-09", day:"Mon", week:11, meeting_dau:null, quilliam:137, downloads:64, signups:54},
-  {date:"2026-03-10", day:"Tue", week:11, meeting_dau:null, quilliam:105, downloads:57, signups:61},
-  {date:"2026-03-11", day:"Wed", week:11, meeting_dau:null, quilliam:136, downloads:61, signups:55},
-  {date:"2026-03-12", day:"Thu", week:11, meeting_dau:null, quilliam:147, downloads:69, signups:47},
-  {date:"2026-03-13", day:"Fri", week:11, meeting_dau:null, quilliam:92,  downloads:50, signups:57},
-  {date:"2026-03-14", day:"Sat", week:11, meeting_dau:null, quilliam:20,  downloads:32, signups:33},
+  {date:"2026-03-08", day:"Sun", week:11, meeting_dau:null, quilliam:23,  page_views:null, downloads:26, signups:23},
+  {date:"2026-03-09", day:"Mon", week:11, meeting_dau:null, quilliam:137, page_views:null, downloads:64, signups:54},
+  {date:"2026-03-10", day:"Tue", week:11, meeting_dau:null, quilliam:105, page_views:null, downloads:57, signups:61},
+  {date:"2026-03-11", day:"Wed", week:11, meeting_dau:null, quilliam:136, page_views:null, downloads:61, signups:55},
+  {date:"2026-03-12", day:"Thu", week:11, meeting_dau:null, quilliam:147, page_views:null, downloads:69, signups:47},
+  {date:"2026-03-13", day:"Fri", week:11, meeting_dau:null, quilliam:92,  page_views:null, downloads:50, signups:57},
+  {date:"2026-03-14", day:"Sat", week:11, meeting_dau:null, quilliam:20,  page_views:null, downloads:32, signups:33},
   // Week 12 (Sun Mar 15 –)
-  {date:"2026-03-15", day:"Sun", week:12, meeting_dau:187, quilliam:29, downloads:24, dl_organic:21, dl_paid:3, signups:25},
-  {date:"2026-03-16", day:"Mon", week:12, meeting_dau:354, quilliam:20, downloads:12, dl_organic:10, dl_paid:2, signups:17, partial:true}
+  {date:"2026-03-15", day:"Sun", week:12, meeting_dau:187, quilliam:29, page_views:null, downloads:24, dl_organic:21, dl_paid:3, signups:25},
+  {date:"2026-03-16", day:"Mon", week:12, meeting_dau:354, quilliam:20, page_views:null, downloads:12, dl_organic:10, dl_paid:2, signups:17, partial:true}
 ];
 
 // Weekly summaries (completed + in-progress)
@@ -250,6 +250,7 @@ const WEEKLY_DATA = [
     week_start:"2026-03-08", week_num:11, complete:true,
     wau:2955, wau_identified:2385, wau_anonymous:570,
     quilliam_unique:414,
+    page_views:null,
     downloads:342, downloads_organic:270, downloads_paid:72,
     signups:330
   },
@@ -260,6 +261,7 @@ const WEEKLY_DATA = [
     // Cumulative uniques so far (Sun through Mon partial)
     wau_cumulative:461,
     quilliam_cumulative:46,
+    page_views_cumulative:null,
     downloads_cumulative:36, downloads_organic:31, downloads_paid:5,
     signups_cumulative:42  // 25 + 17 (signups don't overlap)
   }
@@ -621,78 +623,105 @@ function renderCharts() {
   }
 }
 
+function renderFunnelBars(pv, dl, su, prevPv, prevDl, prevSu, compLabel) {
+  // Funnel: page views → downloads → signups, each bar proportional to the top
+  const topVal = pv || dl || su || 1; // largest stage available for scaling
+  const pvPct = pv != null ? 100 : null;
+  const dlPct = pv != null && pv > 0 ? (dl / pv * 100).toFixed(1) : (dl > 0 ? 100 : 0);
+  const suPct = pv != null && pv > 0 ? (su / pv * 100).toFixed(1) : (dl > 0 ? (su / dl * 100).toFixed(1) : 0);
+
+  // Conversion rates
+  const pvToDl = pv != null && pv > 0 ? ((dl / pv) * 100).toFixed(1) + '%' : '—';
+  const dlToSu = dl > 0 ? ((su / dl) * 100).toFixed(1) + '%' : '—';
+  const prevPvToDl = prevPv != null && prevPv > 0 ? ((prevDl / prevPv) * 100).toFixed(1) + '%' : '—';
+  const prevDlToSu = prevDl > 0 ? ((prevSu / prevDl) * 100).toFixed(1) + '%' : '—';
+
+  let html = '';
+
+  // Page Views bar
+  if (pv != null) {
+    html += `
+      <div class="funnel-bar-container">
+        <div class="funnel-label">Page Views</div>
+        <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:100%;background:var(--accent)">${fmt(pv)}</div></div>
+        <div class="funnel-rate">${compLabel}: ${prevPv != null ? fmt(prevPv) : '—'}</div>
+      </div>`;
+  } else {
+    html += `
+      <div class="funnel-bar-container">
+        <div class="funnel-label">Page Views</div>
+        <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:0%;background:var(--accent)"><span style="color:var(--muted);padding-left:8px">Awaiting data</span></div></div>
+        <div class="funnel-rate">—</div>
+      </div>`;
+  }
+
+  // Downloads bar — scaled relative to page views if available, otherwise 100%
+  const dlBarWidth = pv != null && pv > 0 ? dlPct : 100;
+  html += `
+    <div class="funnel-bar-container">
+      <div class="funnel-label">Downloads</div>
+      <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:${dlBarWidth}%;background:#818cf8">${fmt(dl)}</div></div>
+      <div class="funnel-rate">${pvToDl !== '—' ? pvToDl : ''} ${compLabel}: ${fmt(prevDl)}</div>
+    </div>`;
+
+  // Signups bar — scaled relative to page views if available, otherwise relative to downloads
+  const suBarWidth = pv != null && pv > 0 ? suPct : (dl > 0 ? (su / dl * 100).toFixed(1) : 0);
+  html += `
+    <div class="funnel-bar-container">
+      <div class="funnel-label">Sign Ups</div>
+      <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:${suBarWidth}%;background:var(--accent2)">${fmt(su)}</div></div>
+      <div class="funnel-rate">${dlToSu} conv. ${compLabel}: ${fmt(prevSu)}</div>
+    </div>`;
+
+  return html;
+}
+
 function renderFunnel() {
-  // Show funnel based on current view context
   if (currentView === 'daily') {
     const today = getToday();
     const todayData = findDailyData(today);
     const lastWeekData = findSameDayLastWeek(today);
     const dayName = getDayOfWeek(today);
 
+    const pv = todayData ? todayData.page_views : null;
     const dl = todayData ? todayData.downloads : 0;
     const su = todayData ? todayData.signups : 0;
-    const dlRate = dl > 0 ? ((su / dl) * 100).toFixed(1) + '%' : '—';
+    const prevPv = lastWeekData ? lastWeekData.page_views : null;
     const prevDl = lastWeekData ? lastWeekData.downloads : 0;
     const prevSu = lastWeekData ? lastWeekData.signups : 0;
-    const prevDlRate = prevDl > 0 ? ((prevSu / prevDl) * 100).toFixed(1) + '%' : '—';
-
-    const maxVal = Math.max(dl, su, 1);
 
     return `
       <div class="chart-card" style="margin-bottom:28px">
         <div class="chart-title">Daily Acquisition Funnel</div>
         <div class="chart-subtitle">Today (${dayName}) vs Last ${dayName} | Mixpanel</div>
         <div style="padding-top:16px">
-          <div class="funnel-bar-container">
-            <div class="funnel-label">Downloads</div>
-            <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:${dl > 0 ? 100 : 0}%;background:var(--accent)">${fmt(dl)}</div></div>
-            <div class="funnel-rate">Last ${dayName}: ${fmt(prevDl)}</div>
-          </div>
-          <div class="funnel-bar-container">
-            <div class="funnel-label">Signups</div>
-            <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:${dl > 0 ? (su/dl*100).toFixed(1) : 0}%;background:var(--accent2)">${fmt(su)}</div></div>
-            <div class="funnel-rate">${dlRate} conv. (was ${prevDlRate})</div>
-          </div>
+          ${renderFunnelBars(pv, dl, su, prevPv, prevDl, prevSu, 'Last ' + dayName)}
         </div>
       </div>
-
       <div style="text-align:center;padding:24px;color:var(--muted);font-size:11px;">
         Data source: Mixpanel
       </div>`;
 
   } else {
-    // Weekly view — show current week cumulative funnel
     const currentWeek = WEEKLY_DATA.find(w => !w.complete);
     const lastWeek = WEEKLY_DATA.find(w => w.complete && w.week_num === (currentWeek ? currentWeek.week_num - 1 : null));
-
     if (!currentWeek || !lastWeek) return '';
 
+    const pv = currentWeek.page_views_cumulative || null;
     const dl = currentWeek.downloads_cumulative || 0;
     const su = currentWeek.signups_cumulative || 0;
-    const dlRate = dl > 0 ? ((su / dl) * 100).toFixed(1) + '%' : '—';
-
+    const prevPv = lastWeek.page_views || null;
     const prevDl = lastWeek.downloads || 0;
     const prevSu = lastWeek.signups || 0;
-    const prevDlRate = prevDl > 0 ? ((prevSu / prevDl) * 100).toFixed(1) + '%' : '—';
 
     return `
       <div class="chart-card" style="margin-bottom:28px">
         <div class="chart-title">Weekly Acquisition Funnel</div>
         <div class="chart-subtitle">Week ${currentWeek.week_num} so far (${currentWeek.days_reported} days) vs Week ${lastWeek.week_num} final | Mixpanel</div>
         <div style="padding-top:16px">
-          <div class="funnel-bar-container">
-            <div class="funnel-label">Downloads</div>
-            <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:100%;background:var(--accent)">${fmt(dl)}</div></div>
-            <div class="funnel-rate">Last wk: ${fmt(prevDl)}</div>
-          </div>
-          <div class="funnel-bar-container">
-            <div class="funnel-label">Signups</div>
-            <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:${dl > 0 ? (su/dl*100).toFixed(1) : 0}%;background:var(--accent2)">${fmt(su)}</div></div>
-            <div class="funnel-rate">${dlRate} conv. (last wk: ${prevDlRate})</div>
-          </div>
+          ${renderFunnelBars(pv, dl, su, prevPv, prevDl, prevSu, 'Last wk')}
         </div>
       </div>
-
       <div style="text-align:center;padding:24px;color:var(--muted);font-size:11px;">
         Data source: Mixpanel
       </div>`;
