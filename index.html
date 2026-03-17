@@ -417,9 +417,7 @@ function renderDaily() {
 
   cardsHtml += '</div>';
 
-  // Daily trend chart (last 14 days for context)
-  const last14 = DAILY_DATA.slice(-14);
-
+  // Daily trend chart — merge EMBEDDED_QUILLIAM + DAILY_DATA for last 14 days
   let chartsHtml = `
     <div class="charts-grid">
       <div class="chart-card full">
@@ -516,22 +514,25 @@ function renderCharts() {
   };
 
   if (currentView === 'daily') {
-    // Daily Quilliam trend (last 14 days)
-    const last14 = DAILY_DATA.filter(d => d.quilliam != null).slice(-14);
+    // Build 14-day Quilliam chart from EMBEDDED_QUILLIAM + DAILY_DATA
+    const dailyMap = {};
+    DAILY_DATA.forEach(d => { if (d.quilliam != null) dailyMap[d.date] = { val: d.quilliam, current: d.week === WEEKLY_DATA[WEEKLY_DATA.length-1].week_num }; });
+    EMBEDDED_QUILLIAM.forEach(d => { if (!dailyMap[d.Date]) dailyMap[d.Date] = { val: d.Unique_Users, current: false }; });
+    const allDates = Object.keys(dailyMap).sort().slice(-14);
     const canvas = document.getElementById('dailyQuilliamChart');
     if (canvas) {
       chartInstances.dailyQuilliam = new Chart(canvas, {
         type: 'bar',
         data: {
-          labels: last14.map(d => {
-            const dt = new Date(d.date+'T00:00:00');
-            return d.day + ' ' + dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+          labels: allDates.map(d => {
+            const dt = new Date(d+'T12:00:00');
+            return DAYS[dt.getDay()] + ' ' + dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});
           }),
           datasets: [{
             label: 'Quilliam DAU',
-            data: last14.map(d => d.quilliam),
-            backgroundColor: last14.map(d =>
-              d.week === WEEKLY_DATA[WEEKLY_DATA.length-1].week_num ? 'rgba(34,211,238,0.9)' : 'rgba(34,211,238,0.4)'
+            data: allDates.map(d => dailyMap[d].val),
+            backgroundColor: allDates.map(d =>
+              dailyMap[d].current ? 'rgba(34,211,238,0.9)' : 'rgba(34,211,238,0.4)'
             ),
             borderRadius: 3, borderSkipped: false
           }]
