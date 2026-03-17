@@ -307,9 +307,12 @@ function findDailyData(dateStr) {
 }
 
 function findSameDayLastWeek(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
+  const d = new Date(dateStr + 'T12:00:00');
   d.setDate(d.getDate() - 7);
-  const prevDate = d.toISOString().split('T')[0];
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const prevDate = `${y}-${m}-${day}`;
   return findDailyData(prevDate);
 }
 
