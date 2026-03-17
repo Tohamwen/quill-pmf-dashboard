@@ -156,7 +156,7 @@
 <script>
 // ═══════════════════════════════════════════════════════════════
 // EMBEDDED DATA — Update this section to refresh the dashboard
-// Last synced: Mar 16, 2026
+// Last synced: Mar 17, 2026 03:38AM
 // ═══════════════════════════════════════════════════════════════
 
 // Historical WAU trend (completed weeks, Sun–Sat)
@@ -222,7 +222,8 @@ const EMBEDDED_QUILLIAM = [
   {Date:"2026-03-10",Unique_Users:105,Phase:"Growth"},{Date:"2026-03-11",Unique_Users:136,Phase:"Growth"},
   {Date:"2026-03-12",Unique_Users:147,Phase:"Growth"},{Date:"2026-03-13",Unique_Users:92,Phase:"Growth"},
   {Date:"2026-03-14",Unique_Users:20,Phase:"Growth"},
-  {Date:"2026-03-15",Unique_Users:29,Phase:"Growth"}
+  {Date:"2026-03-15",Unique_Users:29,Phase:"Growth"},
+  {Date:"2026-03-16",Unique_Users:128,Phase:"Growth"}
 ];
 
 // Per-day data for daily view (last 2 weeks for comparison)
@@ -232,38 +233,37 @@ const EMBEDDED_QUILLIAM = [
 // signups = new signups that day
 const DAILY_DATA = [
   // Week 11 (Sun Mar 8 – Sat Mar 14)
-  {date:"2026-03-08", day:"Sun", week:11, meeting_dau:null, quilliam:23,  page_views:null, downloads:26, signups:23},
-  {date:"2026-03-09", day:"Mon", week:11, meeting_dau:1487, quilliam:137, page_views:null, downloads:64, signups:54},
-  {date:"2026-03-10", day:"Tue", week:11, meeting_dau:null, quilliam:105, page_views:null, downloads:57, signups:61},
-  {date:"2026-03-11", day:"Wed", week:11, meeting_dau:null, quilliam:136, page_views:null, downloads:61, signups:55},
-  {date:"2026-03-12", day:"Thu", week:11, meeting_dau:null, quilliam:147, page_views:null, downloads:69, signups:47},
-  {date:"2026-03-13", day:"Fri", week:11, meeting_dau:null, quilliam:92,  page_views:null, downloads:50, signups:57},
-  {date:"2026-03-14", day:"Sat", week:11, meeting_dau:null, quilliam:20,  page_views:null, downloads:32, signups:33},
+  {date:"2026-03-08", day:"Sun", week:11, meeting_dau:null, quilliam:null, page_views:null, downloads:null, signups:1},
+  {date:"2026-03-09", day:"Mon", week:11, meeting_dau:null, quilliam:null, page_views:null, downloads:null, signups:1},
+  {date:"2026-03-10", day:"Tue", week:11, meeting_dau:null, quilliam:null, page_views:null, downloads:null, signups:1},
+  {date:"2026-03-11", day:"Wed", week:11, meeting_dau:null, quilliam:null, page_views:null, downloads:null, signups:1},
+  {date:"2026-03-12", day:"Thu", week:11, meeting_dau:null, quilliam:null, page_views:null, downloads:null, signups:1},
+  {date:"2026-03-13", day:"Fri", week:11, meeting_dau:null, quilliam:null, page_views:null, downloads:null, signups:1},
+  {date:"2026-03-14", day:"Sat", week:11, meeting_dau:null, quilliam:null, page_views:null, downloads:null, signups:1},
   // Week 12 (Sun Mar 15 –)
-  {date:"2026-03-15", day:"Sun", week:12, meeting_dau:187, quilliam:29, page_views:292, downloads:24, dl_organic:21, dl_paid:3, signups:25},
-  {date:"2026-03-16", day:"Mon", week:12, meeting_dau:1453, quilliam:128, page_views:674, downloads:49, dl_organic:38, dl_paid:11, signups:59}
+  {date:"2026-03-15", day:"Sun", week:12, meeting_dau:165, quilliam:29, page_views:281, downloads:24, dl_organic:21, dl_paid:3, signups:25},
+  {date:"2026-03-16", day:"Mon", week:12, meeting_dau:1, quilliam:128, page_views:674, downloads:49, dl_organic:38, dl_paid:11, signups:1},
 ];
 
 // Weekly summaries (completed + in-progress)
 const WEEKLY_DATA = [
   {
     week_start:"2026-03-08", week_num:11, complete:true,
-    wau:2955, wau_identified:2385, wau_anonymous:570,
+    wau:2386, wau_identified:2386, wau_anonymous:0,
     quilliam_unique:414,
-    page_views:3718,
+    page_views:3707,
     downloads:342, downloads_organic:270, downloads_paid:72,
     signups:330
   },
   {
     week_start:"2026-03-15", week_num:12, complete:false,
-    days_reported:2,
-    last_updated:"2026-03-16 06:43pm",
-    // Cumulative uniques so far (Sun through Mon)
-    wau_cumulative:1548,
+    days_reported:3,
+    last_updated:"2026-03-17 03:38am",
+    wau_cumulative:1,
     quilliam_cumulative:147,
-    page_views_cumulative:948,
-    downloads_cumulative:73, downloads_organic:59, downloads_paid:14,
-    signups_cumulative:84  // 25 + 59
+    page_views_cumulative:942,
+    downloads_cumulative:137, downloads_organic:106, downloads_paid:31,
+    signups_cumulative:27
   }
 ];
 
@@ -294,7 +294,7 @@ function fmtMoney(n) { return '$' + Number(n).toLocaleString('en-US', {minimumFr
 
 function getToday() {
   // Today is Monday, March 16, 2026
-  return "2026-03-16";
+  return "2026-03-17";
 }
 
 function getDayOfWeek(dateStr) {
